@@ -1,34 +1,34 @@
 "use client";
 import React, { useMemo, useState } from "react";
+import NaturalLanguageIntake, { IntakeResult } from "./NaturalLanguageIntake";
 
 // 8-in-1 Prompt Framework Builder
 // Troy — this single-file React tool lets you pick a framework (RTF, SOLVE, TAG, RACE, DREAM, PACT, CARE, RISE),
-// fill the fields, and instantly generate a clean, copy‑ready prompt. No backend required.
+// fill the fields, and instantly generate a clean, copy-ready prompt. No backend required.
 
 // ---------- Types ----------
-
- type FrameworkField = { key: string; label: string; placeholder?: string; helper?: string };
- type Framework = {
+type FrameworkField = { key: string; label: string; placeholder?: string; helper?: string };
+type Framework = {
   id: string;
   name: string;
   tagline: string;
   color: string; // Tailwind class for accent
   fields: FrameworkField[];
   template: (v: Record<string, string>, extras: Extras) => string;
- };
- type Extras = {
+};
+type Extras = {
   audience?: string;
   tone?: string;
   length?: string;
   style?: string;
   constraints?: string;
- };
+};
 
 // ---------- Frameworks ----------
 const frameworks: Framework[] = [
   {
     id: "rtf",
-    name: "R‑T‑F",
+    name: "R-T-F",
     tagline: "Role · Task · Format",
     color: "bg-emerald-600",
     fields: [
@@ -36,11 +36,12 @@ const frameworks: Framework[] = [
       { key: "task", label: "Task", placeholder: "Do… (e.g., write a messaging hierarchy)" },
       { key: "format", label: "Format", placeholder: "Output as… (e.g., bullets, table, JSON)" },
     ],
-    template: (v, e) => `You are to act in the following role and produce the specified output.\n\nRole: ${v.role || ""}\nTask: ${v.task || ""}\nFormat: ${v.format || ""}${commonExtras(e)}`,
+    template: (v, e) =>
+      `You are to act in the following role and produce the specified output.\n\nRole: ${v.role || ""}\nTask: ${v.task || ""}\nFormat: ${v.format || ""}${commonExtras(e)}`,
   },
   {
     id: "solve",
-    name: "S‑O‑L‑V‑E",
+    name: "S-O-L-V-E",
     tagline: "Situation · Objective · Limitations · Vision · Execution",
     color: "bg-amber-600",
     fields: [
@@ -50,11 +51,12 @@ const frameworks: Framework[] = [
       { key: "vision", label: "Vision", placeholder: "What great looks like" },
       { key: "execution", label: "Execution", placeholder: "Plan / steps / owners" },
     ],
-    template: (v, e) => `Use the SOLVE framework to respond.\n\nSituation: ${v.situation || ""}\nObjective: ${v.objective || ""}\nLimitations: ${v.limitations || ""}\nVision: ${v.vision || ""}\nExecution: ${v.execution || ""}${commonExtras(e)}`,
+    template: (v, e) =>
+      `Use the SOLVE framework to respond.\n\nSituation: ${v.situation || ""}\nObjective: ${v.objective || ""}\nLimitations: ${v.limitations || ""}\nVision: ${v.vision || ""}\nExecution: ${v.execution || ""}${commonExtras(e)}`,
   },
   {
     id: "tag",
-    name: "T‑A‑G",
+    name: "T-A-G",
     tagline: "Task · Action · Goal",
     color: "bg-indigo-600",
     fields: [
@@ -66,7 +68,7 @@ const frameworks: Framework[] = [
   },
   {
     id: "race",
-    name: "R‑A‑C‑E",
+    name: "R-A-C-E",
     tagline: "Role · Action · Context · Expectation",
     color: "bg-cyan-600",
     fields: [
@@ -79,7 +81,7 @@ const frameworks: Framework[] = [
   },
   {
     id: "dream",
-    name: "D‑R‑E‑A‑M",
+    name: "D-R-E-A-M",
     tagline: "Define · Research · Execute · Analyse · Measure",
     color: "bg-rose-600",
     fields: [
@@ -89,11 +91,12 @@ const frameworks: Framework[] = [
       { key: "analyse", label: "Analyse", placeholder: "How to evaluate results" },
       { key: "measure", label: "Measure", placeholder: "Metrics / instrumentation" },
     ],
-    template: (v, e) => `Use DREAM to structure the response.\n\nDefine: ${v.define || ""}\nResearch: ${v.research || ""}\nExecute: ${v.execute || ""}\nAnalyse: ${v.analyse || ""}\nMeasure: ${v.measure || ""}${commonExtras(e)}`,
+    template: (v, e) =>
+      `Use DREAM to structure the response.\n\nDefine: ${v.define || ""}\nResearch: ${v.research || ""}\nExecute: ${v.execute || ""}\nAnalyse: ${v.analyse || ""}\nMeasure: ${v.measure || ""}${commonExtras(e)}`,
   },
   {
     id: "pact",
-    name: "P‑A‑C‑T",
+    name: "P-A-C-T",
     tagline: "Problem · Approach · Compromise · Test",
     color: "bg-fuchsia-600",
     fields: [
@@ -106,7 +109,7 @@ const frameworks: Framework[] = [
   },
   {
     id: "care",
-    name: "C‑A‑R‑E",
+    name: "C-A-R-E",
     tagline: "Context · Action · Result · Example",
     color: "bg-sky-700",
     fields: [
@@ -119,7 +122,7 @@ const frameworks: Framework[] = [
   },
   {
     id: "rise",
-    name: "R‑I‑S‑E",
+    name: "R-I-S-E",
     tagline: "Role · Input · Steps · Expectation",
     color: "bg-violet-700",
     fields: [
@@ -149,18 +152,29 @@ export default function PromptFrameworkBuilder() {
   const [extras, setExtras] = useState<Extras>({});
   const [customTitle, setCustomTitle] = useState("");
 
-  const fw = useMemo(() => frameworks.find(f => f.id === selectedId)!, [selectedId]);
+  // NEW: short reason text shown after auto-selection
+  const [whyChoice, setWhyChoice] = useState<string>("");
 
+  // NEW: helper to bulk-apply field values
+  function applyFields(obj: Record<string, string>) {
+    setValues((prev) => ({ ...prev, ...obj }));
+  }
+
+  const fw = useMemo(() => frameworks.find((f) => f.id === selectedId)!, [selectedId]);
   const output = useMemo(() => fw.template(values, extras), [fw, values, extras]);
 
   function resetAll() {
     setValues({});
     setExtras({});
     setCustomTitle("");
+    setWhyChoice("");
   }
 
   async function copy() {
-    try { await navigator.clipboard.writeText(output); alert("Copied to clipboard ✔"); } catch {}
+    try {
+      await navigator.clipboard.writeText(output);
+      alert("Copied to clipboard ✔");
+    } catch {}
   }
 
   function download() {
@@ -168,7 +182,9 @@ export default function PromptFrameworkBuilder() {
     const blob = new Blob([`# ${title}\n\n${output}`], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `${slugify(title)}.md`; a.click();
+    a.href = url;
+    a.download = `${slugify(title)}.md`;
+    a.click();
     URL.revokeObjectURL(url);
   }
 
@@ -178,23 +194,46 @@ export default function PromptFrameworkBuilder() {
         <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Prompt Framework Builder</h1>
-            <p className="text-neutral-400">Pick a framework, fill the fields, and generate a copy‑ready prompt.</p>
+            <p className="text-neutral-400">Describe your goal → auto-pick framework → tweak fields → copy.</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={resetAll} className="rounded-xl bg-neutral-800 px-4 py-2 text-sm hover:bg-neutral-700">Reset</button>
-            <button onClick={copy} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500">Copy</button>
-            <button onClick={download} className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold hover:bg-green-500">Download</button>
+            <button onClick={resetAll} className="rounded-xl bg-neutral-800 px-4 py-2 text-sm hover:bg-neutral-700">
+              Reset
+            </button>
+            <button onClick={copy} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500">
+              Copy
+            </button>
+            <button onClick={download} className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold hover:bg-green-500">
+              Download
+            </button>
           </div>
         </header>
+
+        {/* 2c) Natural-language intake (auto-select + prefill) */}
+        <section className="mb-6">
+          <NaturalLanguageIntake
+            onGenerate={(r: IntakeResult) => {
+              setSelectedId(r.frameworkId);
+              applyFields(r.fields);
+              setWhyChoice(r.why);
+            }}
+          />
+          {whyChoice ? <div className="mt-2 text-xs text-neutral-400">{whyChoice}</div> : null}
+        </section>
 
         {/* Framework selector */}
         <section>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {frameworks.map(f => (
+            {frameworks.map((f) => (
               <button
                 key={f.id}
-                onClick={() => setSelectedId(f.id)}
-                className={`group rounded-2xl border border-neutral-800 p-4 text-left transition ${selectedId === f.id ? "ring-2 ring-offset-2 ring-offset-neutral-950 ring-blue-500" : "hover:bg-neutral-900"}`}
+                onClick={() => {
+                  setSelectedId(f.id);
+                  setWhyChoice(""); // user manually chose; clear auto-selected message
+                }}
+                className={`group rounded-2xl border border-neutral-800 p-4 text-left transition ${
+                  selectedId === f.id ? "ring-2 ring-offset-2 ring-offset-neutral-950 ring-blue-500" : "hover:bg-neutral-900"
+                }`}
                 aria-pressed={selectedId === f.id}
               >
                 <div className={`mb-3 h-1.5 w-12 rounded-full ${f.color}`}></div>
@@ -210,11 +249,18 @@ export default function PromptFrameworkBuilder() {
           <div className="space-y-6">
             <div className="rounded-2xl border border-neutral-800 p-5">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">{fw.name} Fields</h2>
+                <h2 className="text-lg font-semibold">
+                  {fw.name} Fields
+                  {whyChoice && (
+                    <span className="ml-2 text-[11px] px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 align-middle">
+                      auto-selected
+                    </span>
+                  )}
+                </h2>
                 <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${fw.color}`}>{fw.tagline}</span>
               </div>
               <div className="space-y-4">
-                {fw.fields.map(field => (
+                {fw.fields.map((field) => (
                   <label key={field.key} className="block">
                     <span className="mb-1 block text-sm text-neutral-300">{field.label}</span>
                     <textarea
@@ -222,7 +268,7 @@ export default function PromptFrameworkBuilder() {
                       className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm outline-none focus:border-neutral-700"
                       placeholder={field.placeholder}
                       value={values[field.key] || ""}
-                      onChange={(e) => setValues(v => ({ ...v, [field.key]: e.target.value }))}
+                      onChange={(e) => setValues((v) => ({ ...v, [field.key]: e.target.value }))}
                     />
                   </label>
                 ))}
@@ -230,22 +276,54 @@ export default function PromptFrameworkBuilder() {
             </div>
 
             <div className="rounded-2xl border border-neutral-800 p-5">
-              <h3 className="mb-3 text-lg font-semibold">Extras (optional)</h3>
+              <h3 className="mb-3 text-lg font-semibold">Style & Extras (optional)</h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Input label="Audience" value={extras.audience} onChange={(v)=>setExtras(e=>({...e, audience:v}))} placeholder="e.g., B2B SaaS founders" />
-                <Input label="Tone / Voice" value={extras.tone} onChange={(v)=>setExtras(e=>({...e, tone:v}))} placeholder="e.g., direct, concise, optimistic" />
-                <Input label="Target Length" value={extras.length} onChange={(v)=>setExtras(e=>({...e, length:v}))} placeholder="e.g., ~300 words, 5 bullets" />
-                <Input label="Style / Formatting" value={extras.style} onChange={(v)=>setExtras(e=>({...e, style:v}))} placeholder="e.g., markdown table, numbered steps" />
+                <Input
+                  label="Audience"
+                  value={extras.audience}
+                  onChange={(v) => setExtras((e) => ({ ...e, audience: v }))}
+                  placeholder="e.g., B2B SaaS founders"
+                />
+                <Input
+                  label="Tone / Voice"
+                  value={extras.tone}
+                  onChange={(v) => setExtras((e) => ({ ...e, tone: v }))}
+                  placeholder="e.g., direct, concise, optimistic"
+                />
+                <Input
+                  label="Target Length"
+                  value={extras.length}
+                  onChange={(v) => setExtras((e) => ({ ...e, length: v }))}
+                  placeholder="e.g., ~300 words, 5 bullets"
+                />
+                <Input
+                  label="Style / Formatting"
+                  value={extras.style}
+                  onChange={(v) => setExtras((e) => ({ ...e, style: v }))}
+                  placeholder="e.g., markdown table, numbered steps"
+                />
                 <div className="sm:col-span-2">
-                  <Input label="Constraints" value={extras.constraints} onChange={(v)=>setExtras(e=>({...e, constraints:v}))} placeholder="e.g., avoid jargon; cite sources" />
+                  <Input
+                    label="Constraints"
+                    value={extras.constraints}
+                    onChange={(v) => setExtras((e) => ({ ...e, constraints: v }))}
+                    placeholder="e.g., avoid jargon; cite sources"
+                  />
                 </div>
               </div>
             </div>
 
             <div className="rounded-2xl border border-neutral-800 p-5">
               <h3 className="mb-3 text-lg font-semibold">Save / Title (optional)</h3>
-              <Input label="Title for download" value={customTitle} onChange={setCustomTitle} placeholder="e.g., VoCo Messaging – SOLVE draft" />
-              <p className="mt-2 text-xs text-neutral-400">The title is used as the filename when you download the prompt as <code>.md</code>.</p>
+              <Input
+                label="Title for download"
+                value={customTitle}
+                onChange={setCustomTitle}
+                placeholder="e.g., VoCo Messaging – SOLVE draft"
+              />
+              <p className="mt-2 text-xs text-neutral-400">
+                The title is used as the filename when you download the prompt as <code>.md</code>.
+              </p>
             </div>
           </div>
 
@@ -254,8 +332,12 @@ export default function PromptFrameworkBuilder() {
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Preview</h2>
               <div className="flex gap-2">
-                <button onClick={copy} className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold hover:bg-blue-500">Copy</button>
-                <button onClick={download} className="rounded-xl bg-green-600 px-3 py-2 text-xs font-semibold hover:bg-green-500">Download</button>
+                <button onClick={copy} className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold hover:bg-blue-500">
+                  Copy
+                </button>
+                <button onClick={download} className="rounded-xl bg-green-600 px-3 py-2 text-xs font-semibold hover:bg-green-500">
+                  Download
+                </button>
               </div>
             </div>
             <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl bg-neutral-900 p-4 text-sm leading-relaxed">
@@ -267,7 +349,9 @@ export default function PromptFrameworkBuilder() {
 
         {/* Footer */}
         <footer className="mt-10 text-center text-xs text-neutral-500">
-          <p>Built from the 8 popular prompt frameworks · R‑T‑F · S‑O‑L‑V‑E · T‑A‑G · R‑A‑C‑E · D‑R‑E‑A‑M · P‑A‑C‑T · C‑A‑R‑E · R‑I‑S‑E.</p>
+          <p>
+            Built from the 8 popular prompt frameworks · R-T-F · S-O-L-V-E · T-A-G · R-A-C-E · D-R-E-A-M · P-A-C-T · C-A-R-E · R-I-S-E.
+          </p>
         </footer>
       </div>
     </div>
@@ -275,14 +359,24 @@ export default function PromptFrameworkBuilder() {
 }
 
 // ---------- Small UI helpers ----------
-function Input({ label, value, onChange, placeholder }: { label: string; value: string | undefined; onChange: (v: string)=>void; placeholder?: string }) {
+function Input({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string | undefined;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
   return (
     <label className="block">
       <span className="mb-1 block text-sm text-neutral-300">{label}</span>
       <input
         className="w-full rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-sm outline-none focus:border-neutral-700"
         value={value || ""}
-        onChange={(e)=>onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
       />
     </label>

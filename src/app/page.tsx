@@ -6,6 +6,7 @@ import AccessGate from "./components/AccessGate";
 import PromptFrameworkBuilder from "./components/PromptFrameworkBuilder";
 import WorkshopBanner from "./components/WorkshopBanner";
 import VibePanel from "./components/VibePanel";
+import NaturalLanguageIntake, { IntakeResult } from "./NaturalLanguageIntake";
 
 export default function Home() {
   return (
