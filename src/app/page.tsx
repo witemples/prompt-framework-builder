@@ -16,7 +16,6 @@ export default function Home() {
         title="Unlock the OOTI Prompt Lab"
       >
         <div className="mx-auto max-w-7xl px-4 py-6">
-          <VibePanel /> {/* ✅ New vibe selector */}
           <PromptFrameworkBuilder />
           <WorkshopBanner /> {/* stays where it is */}
         </div>

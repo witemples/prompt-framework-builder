@@ -151,6 +151,12 @@ export default function PromptFrameworkBuilder() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [extras, setExtras] = useState<Extras>({});
   const [customTitle, setCustomTitle] = useState("");
+  // NEW
+  const [whyChoice, setWhyChoice] = useState<string>("");
+
+  function applyFields(obj: Record<string, string>) {setValues((prev) => ({ ...prev, ...obj }));
+}
+
 
   // NEW: short reason text shown after auto-selection
   const [whyChoice, setWhyChoice] = useState<string>("");
@@ -208,6 +214,18 @@ export default function PromptFrameworkBuilder() {
             </button>
           </div>
         </header>
+        {/* Natural-language intake (auto-select + prefill) */}
+<section className="mb-6">
+  <NaturalLanguageIntake
+    onGenerate={(r) => {
+      setSelectedId(r.frameworkId);
+      applyFields(r.fields);
+      setWhyChoice(r.why);
+    }}
+  />
+  {whyChoice ? <div className="mt-2 text-xs text-neutral-400">{whyChoice}</div> : null}
+</section>
+
 
         {/* 2c) Natural-language intake (auto-select + prefill) */}
         <section className="mb-6">
