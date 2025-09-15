@@ -158,15 +158,6 @@ export default function PromptFrameworkBuilder() {
   function applyFields(obj: Record<string, string>) {setValues((prev) => ({ ...prev, ...obj }));
 }
 
-
-  // NEW: short reason text shown after auto-selection
-  const [whyChoice, setWhyChoice] = useState<string>("");
-
-  // NEW: helper to bulk-apply field values
-  function applyFields(obj: Record<string, string>) {
-    setValues((prev) => ({ ...prev, ...obj }));
-  }
-
   const fw = useMemo(() => frameworks.find((f) => f.id === selectedId)!, [selectedId]);
   const output = useMemo(() => fw.template(values, extras), [fw, values, extras]);
 
@@ -227,18 +218,6 @@ export default function PromptFrameworkBuilder() {
   {whyChoice ? <div className="mt-2 text-xs text-neutral-400">{whyChoice}</div> : null}
 </section>
 
-
-        {/* 2c) Natural-language intake (auto-select + prefill) */}
-        <section className="mb-6">
-          <NaturalLanguageIntake
-            onGenerate={(r: IntakeResult) => {
-              setSelectedId(r.frameworkId);
-              applyFields(r.fields);
-              setWhyChoice(r.why);
-            }}
-          />
-          {whyChoice ? <div className="mt-2 text-xs text-neutral-400">{whyChoice}</div> : null}
-        </section>
 
         {/* Framework selector */}
         <section>
