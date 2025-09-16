@@ -2,10 +2,6 @@
 import React, { useMemo, useState } from "react";
 import NaturalLanguageIntake, { IntakeResult } from "./NaturalLanguageIntake";
 
-// 8-in-1 Prompt Framework Builder
-// Troy — this single-file React tool lets you pick a framework (RTF, SOLVE, TAG, RACE, DREAM, PACT, CARE, RISE),
-// fill the fields, and instantly generate a clean, copy-ready prompt. No backend required.
-
 // ---------- Types ----------
 type FrameworkField = { key: string; label: string; placeholder?: string; helper?: string };
 type Framework = {
@@ -23,7 +19,6 @@ type Extras = {
   style?: string;
   constraints?: string;
 };
-
 
 // ---------- Frameworks ----------
 const frameworks: Framework[] = [
@@ -78,7 +73,8 @@ const frameworks: Framework[] = [
       { key: "context", label: "Context", placeholder: "Background info" },
       { key: "expectation", label: "Expectation", placeholder: "Definition of done" },
     ],
-    template: (v, e) => `Role: ${v.role || ""}\nAction: ${v.action || ""}\nContext: ${v.context || ""}\nExpectation: ${v.expectation || ""}${commonExtras(e)}`,
+    template: (v, e) =>
+      `Role: ${v.role || ""}\nAction: ${v.action || ""}\nContext: ${v.context || ""}\nExpectation: ${v.expectation || ""}${commonExtras(e)}`,
   },
   {
     id: "dream",
@@ -106,7 +102,8 @@ const frameworks: Framework[] = [
       { key: "compromise", label: "Compromise", placeholder: "Tradeoffs / risks" },
       { key: "test", label: "Test", placeholder: "How we’ll validate" },
     ],
-    template: (v, e) => `Problem: ${v.problem || ""}\nApproach: ${v.approach || ""}\nCompromise: ${v.compromise || ""}\nTest: ${v.test || ""}${commonExtras(e)}`,
+    template: (v, e) =>
+      `Problem: ${v.problem || ""}\nApproach: ${v.approach || ""}\nCompromise: ${v.compromise || ""}\nTest: ${v.test || ""}${commonExtras(e)}`,
   },
   {
     id: "care",
@@ -119,7 +116,8 @@ const frameworks: Framework[] = [
       { key: "result", label: "Result", placeholder: "Expected outcome" },
       { key: "example", label: "Example", placeholder: "Concrete illustration" },
     ],
-    template: (v, e) => `Context: ${v.context || ""}\nAction: ${v.action || ""}\nResult: ${v.result || ""}\nExample: ${v.example || ""}${commonExtras(e)}`,
+    template: (v, e) =>
+      `Context: ${v.context || ""}\nAction: ${v.action || ""}\nResult: ${v.result || ""}\nExample: ${v.example || ""}${commonExtras(e)}`,
   },
   {
     id: "rise",
@@ -132,7 +130,8 @@ const frameworks: Framework[] = [
       { key: "steps", label: "Steps", placeholder: "Process to follow" },
       { key: "expectation", label: "Expectation", placeholder: "What success looks like" },
     ],
-    template: (v, e) => `Role: ${v.role || ""}\nInput: ${v.input || ""}\nSteps: ${v.steps || ""}\nExpectation: ${v.expectation || ""}${commonExtras(e)}`,
+    template: (v, e) =>
+      `Role: ${v.role || ""}\nInput: ${v.input || ""}\nSteps: ${v.steps || ""}\nExpectation: ${v.expectation || ""}${commonExtras(e)}`,
   },
 ];
 
@@ -152,11 +151,12 @@ export default function PromptFrameworkBuilder() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [extras, setExtras] = useState<Extras>({});
   const [customTitle, setCustomTitle] = useState("");
-  // NEW
   const [whyChoice, setWhyChoice] = useState<string>("");
+  const [suggestedById, setSuggestedById] = useState<Record<string, Record<string, string>>>({});
 
-  function applyFields(obj: Record<string, string>) {setValues((prev) => ({ ...prev, ...obj }));
-}
+  function applyFields(obj: Record<string, string>) {
+    setValues((prev) => ({ ...prev, ...obj }));
+  }
 
   const fw = useMemo(() => frameworks.find((f) => f.id === selectedId)!, [selectedId]);
   const output = useMemo(() => fw.template(values, extras), [fw, values, extras]);
@@ -206,18 +206,16 @@ export default function PromptFrameworkBuilder() {
             </button>
           </div>
         </header>
-        {/* Natural-language intake (auto-select + prefill) */}
-<section className="mb-6">
-  <NaturalLanguageIntake
-    onGenerate={(r) => {
-      setSelectedId(r.frameworkId);
-      applyFields(r.fields);
-      setWhyChoice(r.why);
-    }}
-  />
-  {whyChoice ? <div className="mt-2 text-xs text-neutral-400">{whyChoice}</div> : null}
-</section>
 
+        <NaturalLanguageIntake
+          onGenerate={(r: IntakeResult) => {
+            setSuggestedById(r.fieldsById); // store suggestions for ALL frameworks
+            setSelectedId(r.bestId); // jump to the recommended one
+            setValues(r.fieldsById[r.bestId] || {}); // and load its suggested fields
+            setWhyChoice(r.why);
+          }}
+        />
+        {whyChoice ? <div className="mt-2 text-xs text-neutral-400">{whyChoice}</div> : null}
 
         {/* Framework selector */}
         <section>
@@ -227,10 +225,17 @@ export default function PromptFrameworkBuilder() {
                 key={f.id}
                 onClick={() => {
                   setSelectedId(f.id);
-                  setWhyChoice(""); // user manually chose; clear auto-selected message
+                  if (suggestedById[f.id]) {
+                    setValues(suggestedById[f.id]);
+                  } else {
+                    setValues({});
+                  }
+                  setWhyChoice(""); // manual choice
                 }}
                 className={`group rounded-2xl border border-neutral-800 p-4 text-left transition ${
-                  selectedId === f.id ? "ring-2 ring-offset-2 ring-offset-neutral-950 ring-blue-500" : "hover:bg-neutral-900"
+                  selectedId === f.id
+                    ? "ring-2 ring-offset-2 ring-offset-neutral-950 ring-blue-500"
+                    : "hover:bg-neutral-900"
                 }`}
                 aria-pressed={selectedId === f.id}
               >
@@ -255,7 +260,9 @@ export default function PromptFrameworkBuilder() {
                     </span>
                   )}
                 </h2>
-                <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${fw.color}`}>{fw.tagline}</span>
+                <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${fw.color}`}>
+                  {fw.tagline}
+                </span>
               </div>
               <div className="space-y-4">
                 {fw.fields.map((field) => (
@@ -341,7 +348,9 @@ export default function PromptFrameworkBuilder() {
             <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl bg-neutral-900 p-4 text-sm leading-relaxed">
 {output}
             </pre>
-            <p className="mt-3 text-xs text-neutral-500">Tip: Keep each field crisp. If a field is empty, it’s omitted from your prompt.</p>
+            <p className="mt-3 text-xs text-neutral-500">
+              Tip: Keep each field crisp. If a field is empty, it’s omitted from your prompt.
+            </p>
           </div>
         </section>
 
@@ -382,8 +391,5 @@ function Input({
 }
 
 function slugify(s: string) {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 }
