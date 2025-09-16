@@ -5,7 +5,6 @@ import Footer from "./components/Footer";
 import AccessGate from "./components/AccessGate";
 import PromptFrameworkBuilder from "./components/PromptFrameworkBuilder";
 import WorkshopBanner from "./components/WorkshopBanner";
-import "../styles/globals.css";
 
 export default function Home() {
   return (
